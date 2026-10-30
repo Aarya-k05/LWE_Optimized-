@@ -43,19 +43,19 @@ Final encrypted-controller state: [ 2.93596687e-04 -6.16360495e-05  5.28482239e-
  -5.59765587e-04  3.82793812e-04]
 
 6. ACCURACY
-Maximum state error (full 18-dim vector norm): 2.159663570780e-07
-Maximum control error: 3.289263807201e-06
+Maximum state error (full 18-dim vector norm): 2.159663570581e-07
+Maximum control error: 3.289263806938e-06
 
 7. TIMING
-Encrypt (online):           0.001324 ms/step
-Evaluate:                   0.000983 ms/step
-Decrypt/recover:            0.001184 ms/step
-Critical path (3 calls):    0.003491 ms/step  (median 0.003057)
-Critical path (fused call): 0.001116 ms/step
-Offline pre-compute:        0.002238 ms/step  (idle part of the 100 ms period)
-Pure compute, critical path (dispatch excluded): 0.000215 ms/step
-Pure compute, everything incl. offline:          0.001138 ms/step
-Total work per step:        0.005728 ms/step
+Encrypt (online):           0.003197 ms/step
+Evaluate:                   0.001588 ms/step
+Decrypt/recover:            0.001930 ms/step
+Critical path (3 calls):    0.006715 ms/step  (median 0.005866)
+Critical path (fused call): 0.002495 ms/step
+Offline pre-compute:        0.003541 ms/step  (idle part of the 100 ms period)
+Pure compute, critical path (dispatch excluded): 0.000330 ms/step
+Pure compute, everything incl. offline:          0.001997 ms/step
+Total work per step:        0.010256 ms/step
 
 8. NOISE (absolute)
 State noise  ||decoded - true||_inf : max 1.2855e-08, mean 8.3037e-09
