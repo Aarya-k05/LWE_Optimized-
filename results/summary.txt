@@ -1,0 +1,79 @@
+========================================================================
+LWE RECURSIVE STREAM-CIPHER STATE-FEEDBACK CONTROL SYSTEM
+========================================================================
+
+1. PLANT
+9-mass chain: mass 1 anchored to a wall, mass 9
+driven by a single actuator; identical spring/damper between
+each neighbouring pair (m=1 kg, c=1.0 Ns/m, k=2 N/m).
+State vector (n=18): [pos1, vel1, ..., pos9, vel9]
+
+2. CONTROLLER
+Control law: u(k) = -K x(k)   (LQR, same K as the CKKS project)
+K =
+[[ 0.9118 11.764   2.2289 22.8841  4.3273 32.6615  7.5283 40.2987 12.079  44.8737 18.1262 45.3254
+  25.6921 40.4364 35.2612 29.115  56.9094 15.5242]]
+
+3. DISCRETIZATION
+Sampling time: 0.1 s (ZOH)
+Ad shape: (18, 18), Bd shape: (18, 1)
+
+4. LWE CONFIGURATION  (profile: optimized)
+Modulus q: 2^61-1 = 2305843009213693951
+Secret matrix: 18x18, uniform in [0, q//1)
+Noise: exact discrete Gaussian (CDT), sigma = 1, seed 42
+State scale: 2^28;  gain scale: 2^22  (control scale 2^50)
+Recoverable |u| range without wrap-around: +-1024  (measured max |u| = 56.9094)
+Ciphertext: 144 bytes per state vector (18 x 8-byte words)
+Recurrence: V[k] = S.V[k-1] + m[k] + e[k] (mod q), V[-1] = 0
+Control: F.V[k] - (F.S).V[k-1] (mod q), centred decode
+
+5. SIMULATION
+Control cycles: 200
+Initial state: [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 1. 0.]
+Final plaintext state: [ 2.93596582e-04 -6.16361335e-05  5.28482125e-04 -1.05372695e-04
+  6.60963213e-04 -1.16767427e-04  6.71326361e-04 -8.76242422e-05
+  5.63714845e-04 -1.76485517e-05  3.58543510e-04  8.50026251e-05
+  8.29882834e-05  2.03730135e-04 -2.34100488e-04  3.13672075e-04
+ -5.59765565e-04  3.82797260e-04]
+Final encrypted-controller state: [ 2.93596687e-04 -6.16360495e-05  5.28482239e-04 -1.05372649e-04
+  6.60963171e-04 -1.16767555e-04  6.71326003e-04 -8.76245342e-05
+  5.63714148e-04 -1.76488121e-05  3.58542663e-04  8.50026420e-05
+  8.29876567e-05  2.03730513e-04 -2.34100567e-04  3.13671926e-04
+ -5.59765587e-04  3.82793812e-04]
+
+6. ACCURACY
+Maximum state error (full 18-dim vector norm): 2.159663570780e-07
+Maximum control error: 3.289263807201e-06
+
+7. TIMING
+Encrypt (online):           0.001324 ms/step
+Evaluate:                   0.000983 ms/step
+Decrypt/recover:            0.001184 ms/step
+Critical path (3 calls):    0.003491 ms/step  (median 0.003057)
+Critical path (fused call): 0.001116 ms/step
+Offline pre-compute:        0.002238 ms/step  (idle part of the 100 ms period)
+Pure compute, critical path (dispatch excluded): 0.000215 ms/step
+Pure compute, everything incl. offline:          0.001138 ms/step
+Total work per step:        0.005728 ms/step
+
+8. NOISE (absolute)
+State noise  ||decoded - true||_inf : max 1.2855e-08, mean 8.3037e-09
+Control noise |u_lwe - (-Kx)| same state: max 1.4368e-06, rms 4.8931e-07
+Noise growth check (rms 2nd half / rms 1st half): control 0.988, state 0.993  (~1 => no accumulation => no bootstrapping needed)
+
+9. VALIDATION
+fixed_point: PASS
+modular_wraparound: PASS
+recursive_state: PASS
+report_equation: PASS
+kernel_equivalence: PASS
+signed_control: PASS
+Every step state recovered within noise bound: PASS
+Every step control inside the non-wrapping range: PASS
+Overall: PASS
+
+10. FILES
+control_data.csv, execution_trace.csv, state_response.png, control_signal.png, error_vs_step.png, timing_breakdown.png, lwe_stream_*.{csv,txt,png,pdf}, lwe_relative_noise.*, ckks_vs_lwe_*
+
+No security claim: custom secret-key recurrence, n=18, not standard HE.

@@ -1,0 +1,40 @@
+LWE stream cipher - absolute and relative noise
+================================================
+Steps: 200   floor = 0.001 x peak signal
+State error = ||x_scheme - x_plain||_2 ; signal = ||x_plain||_2
+Control error = |u_scheme - u_plain| ; signal = |u_plain|
+
+  LWE state
+    absolute  max=7.2541e-04   rms=3.0283e-04   (signal peak 5.6340e+00)
+    relative  peak-rel=1.2876e-04   horizon-rel=7.1404e-04
+              per-step floored: max=1.2715e-01  median=1.0794e-02
+              per-step raw max=3.3673e-01 at step 191 (ill-conditioned)
+
+  LWE control
+    absolute  max=1.4436e-02   rms=5.4847e-03   (signal peak 5.6909e+01)
+    relative  peak-rel=2.5367e-04   horizon-rel=1.0203e-03
+              per-step floored: max=2.5367e-01  median=5.8298e-02
+              per-step raw max=2.2145e+02 at step 55 (ill-conditioned)
+
+  CKKS state
+    absolute  max=1.3951e-06   rms=1.3695e-07   (signal peak 5.6340e+00)
+    relative  peak-rel=2.4762e-07   horizon-rel=3.2292e-07
+              per-step floored: max=1.1674e-05  median=1.5993e-06
+              per-step raw max=3.0601e-05 at step 181 (ill-conditioned)
+
+  CKKS control
+    absolute  max=2.2624e-05   rms=2.5671e-06   (signal peak 5.6909e+01)
+    relative  peak-rel=3.9754e-07   horizon-rel=4.7752e-07
+              per-step floored: max=3.2687e-05  median=4.5196e-06
+              per-step raw max=1.7681e-02 at step 56 (ill-conditioned)
+
+LWE / CKKS ratio (>1 means LWE noisier)
+  state: abs-max x520   peak-rel x520   horizon-rel x2.21e+03
+  control: abs-max x638   peak-rel x638   horizon-rel x2.14e+03
+
+Note: absolute noise comes from integer noise injected every step (F.e / 2^24 for
+control, e / 2^16 per state entry), so it does not decay while the
+signal does. Per-step relative error therefore rises as the regulator
+converges; peak-relative and horizon-relative are the stable figures.
+Same plaintext baseline is assumed for CKKS (verified upstream by the
+comparison script). No security claim: custom scheme, not standard HE.

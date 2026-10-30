@@ -1,0 +1,77 @@
+Fresh LWE-based recursive stream-cipher simulation
+===================================================
+State dimension: 18 (expected 18)
+Control steps: 200 (expected 200)
+Input gain K: [[ 0.911795163337, 11.763976618943,  2.228926293903, 22.88412993647 ,
+   4.327257147477, 32.661526433766,  7.528287269966, 40.298677199664,
+  12.078982967339, 44.873712745067, 18.126198870226, 45.325361250083,
+  25.692137269707, 40.436399676451, 35.26118728602 , 29.115013532784,
+  56.90935317091 , 15.524186316046]]
+
+Cryptographic construction
+--------------------------
+Modulus q: 2^61-1 = 2305843009213693951
+Secret matrix: 18x18, uniform in [0, q//1)
+Noise: exact discrete Gaussian (CDT), sigma = 1, seed 42
+State scale: 2^28;  gain scale: 2^22  (control scale 2^50)
+Recoverable |u| range without wrap-around: +-1024  (measured max |u| = 56.9094)
+Ciphertext: 144 bytes per state vector (18 x 8-byte words)
+Recurrence: V[k] = S.V[k-1] + m[k] + e[k] (mod q), V[-1] = 0
+Control: F.V[k] - (F.S).V[k-1] (mod q), centred decode
+
+Measured per-step timing (mean over 200 recorded steps)
+--------------------------------------------------------
+Encrypt (online):           0.001324 ms/step
+Evaluate:                   0.000983 ms/step
+Decrypt/recover:            0.001184 ms/step
+Critical path (3 calls):    0.003491 ms/step  (median 0.003057)
+Critical path (fused call): 0.001116 ms/step
+Offline pre-compute:        0.002238 ms/step  (idle part of the 100 ms period)
+Pure compute, critical path (dispatch excluded): 0.000215 ms/step
+Pure compute, everything incl. offline:          0.001138 ms/step
+Total work per step:        0.005728 ms/step
+Setup/key generation (RNG + S + F@S precompute, excluded from per-step): 0.176912 ms.
+
+Serialized sizes
+-----------------
+State ciphertext payload: 144 bytes (0.140625 KB). No network transfer is implemented.
+
+Numerical validation
+--------------------
+fixed_point: PASS
+modular_wraparound: PASS
+recursive_state: PASS
+report_equation: PASS
+kernel_equivalence: PASS
+signed_control: PASS
+State recovery every step: PASS
+Control recovery every step: PASS
+Overall recovery validation: PASS
+Maximum state error max_k ||x_LWE-x_plain||_2: 2.15966357078e-07
+Maximum control error max_k |u_LWE-u_plain|: 3.2892638072e-06
+
+Noise
+-----
+State noise  ||decoded - true||_inf : max 1.2855e-08, mean 8.3037e-09
+Control noise |u_lwe - (-Kx)| same state: max 1.4368e-06, rms 4.8931e-07
+Noise growth check (rms 2nd half / rms 1st half): control 0.988, state 0.993  (~1 => no accumulation => no bootstrapping needed)
+
+Caveat
+------
+Standard LWE / homomorphic-encryption security: NOT CLAIMED. Evaluation uses secret-key modular recurrence cancellation (F.V[k] - (F.S).V[k-1]).
+
+CKKS comparison assessment
+==========================
+CKKS plant/controller source configuration: PASS
+Source checks: 9 masses=PASS; 9-chain physical defaults=PASS; interleaved states=PASS; LQR Q/R=PASS; CARE gain=PASS; ZOH=PASS; CKKS dot on encrypted vector=PASS; 200-step x0[16] run=PASS; dt and duration=PASS; zero reference=PASS; same error norms=PASS
+Plaintext baseline agreement CKKS-vs-LWE and against CARE/ZOH reconstruction:
+  max_plain_control_ckks_lwe_diff: 4.9785783135e-13
+  max_plain_control_reference_diff: 4.9785783135e-13
+  max_plain_state_ckks_lwe_diff: 1.46194086035e-12
+  max_plain_state_reference_diff: 1.46194086035e-12
+CKKS setup/context/key-generation time: NOT RECORDED in archived run.
+LWE setup/key-generation time (RNG + S, excluded): 0.176912 ms
+Comparison fairness: PROVISIONAL, not definitive.
+Reasons: the current LWE gain uses a fixed-point Q22 gain scaling not specified by the report/C example; the C source's gain examples are not the CKKS LQR gain (the timed state model has N=2 and 100 steps; the separate vector-encryption example has N_DIM=400 and a random F); original C truncates Box-Muller noise to int while this Python simulation rounds it; the report's own parameter table describes a different two-state, 0.01-second, 10-second example; CKKS/LWE setup communication and total network framing are not recorded; timing boundaries are similar but not identical; identical runtime/hardware conditions have not been established.
+Metric methodology: control error is max over steps 0..199 of |u_scheme-u_plain|. State error is max over the same steps of ||x_scheme-x_plain||_2. Ciphertext payload is the recorded serialized object size only; it excludes context/keys/parameters/framing. LWE has no distinct encrypted control-result ciphertext.
+LWE evaluation is secret-key modular recurrence cancellation, not homomorphic evaluation and not an independent evaluator. CKKS evaluation uses TenSEAL CKKS ciphertext-plaintext dot product. No security claim is made.
